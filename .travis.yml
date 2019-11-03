@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tinletinic/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true tinletinic/react-test npm test
+
+after_success:
+  - docker build -t tinletinic/multi-client ./client
+  - docker build -t tinletinic/multi-nginx ./nginx
+  - docker build -t tinletinic/multi-server ./server
+  - docker build -t tinletinic/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push tinletinic/multi-client
+  - docker push tinletinic/multi-nginx
+  - docker push tinletinic/multi-server
+  - docker push tinletinic/multi-worker
